@@ -9,6 +9,8 @@ import java.util.Date;
 
 /**
  * Created by skand on 2/6/15.
+ *
+ * Contains gist from https://github.com/udacity/Sunshine
  */
 public class WeatherDataParser {
 

@@ -54,7 +54,6 @@ public class ForecastFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
     }
 
     @Override
@@ -107,38 +106,6 @@ public class ForecastFragment extends Fragment {
         mListView.setAdapter(forecastAdapter);
 
         return rootView;
-    }
-
-    /**
-     * This hook is called whenever an item in your options menu is selected.
-     * The default implementation simply returns false to have the normal
-     * processing happen (calling the item's Runnable or sending a message to
-     * its Handler as appropriate).  You can use this method for any items
-     * for which you would like to do processing without those other
-     * facilities.
-     * <p/>
-     * <p>Derived classes should call through to the base class for it to
-     * perform the default menu handling.
-     *
-     * For now, we will only handle the refresh menu item.
-     * Eventually, the refresh menu item will be removed,
-     * and so will this code fragment
-     *
-     * @param item The menu item that was selected.
-     * @return boolean Return false to allow normal menu processing to
-     * proceed, true to consume it here.
-     * @see #onCreateOptionsMenu
-     */
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-
-        // For the time being, we will add a handler for refresh
-        int id = item.getItemId();
-        if(id == R.id.action_refresh) {
-            refreshWeather();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
     }
 
     private void refreshWeather() {
@@ -272,7 +239,9 @@ public class ForecastFragment extends Fragment {
         }
 
         /**
-         * Runs on the UI thread before {@link #doInBackground}.
+         * Runs on the UI thread before {@link #doInBackground}. This
+         * can be used to start the refresh indicator on the
+         * SwipeRefreshLayout
          *
          * @see #onPostExecute
          * @see #doInBackground
@@ -283,12 +252,37 @@ public class ForecastFragment extends Fragment {
         }
 
         /**
+         * <p>Applications should preferably override {@link #onCancelled(Object)}.
+         * This method is invoked by the default implementation of
+         * {@link #onCancelled(Object)}.</p>
+         * <p/>
+         * <p>Runs on the UI thread after {@link #cancel(boolean)} is invoked and
+         * {@link #doInBackground(Object[])} has finished.</p>
+         *
+         * Used to cancel refresh indicator on SwipeRefreshLayout if
+         * the task was cancelled abruptly
+         *
+         * @see #onCancelled(Object)
+         * @see #cancel(boolean)
+         * @see #isCancelled()
+         */
+        @Override
+        protected void onCancelled() {
+            swipeRefreshLayout.setRefreshing(false);
+            super.onCancelled();
+        }
+
+        /**
          * <p>Runs on the UI thread after {@link #doInBackground}. The
          * specified result is the value returned by {@link #doInBackground}.</p>
          * <p/>
          * <p>This method won't be invoked if the task was cancelled.</p>
          *
-         * @param strings The result of the operation computed by {@link #doInBackground}.
+         * Used to update the forecastAdapter to stop indicating
+         * refresh on the SwipeRefreshLayout
+         *
+         * @param forecastStrings The result of the operation computed by
+         * {@link #doInBackground}.
          * @see #onPreExecute
          * @see #doInBackground
          * @see #onCancelled(Object)
@@ -296,10 +290,13 @@ public class ForecastFragment extends Fragment {
         @Override
         protected void onPostExecute(String[] forecastStrings) {
             if(forecastStrings != null) {
+                forecastAdapter.setNotifyOnChange(false);
                 forecastAdapter.clear();
                 for(String dayForecastString:forecastStrings) {
                     forecastAdapter.add(dayForecastString);
                 }
+                forecastAdapter.setNotifyOnChange(true);
+                forecastAdapter.notifyDataSetChanged();
             }
             swipeRefreshLayout.setRefreshing(false);
         }
