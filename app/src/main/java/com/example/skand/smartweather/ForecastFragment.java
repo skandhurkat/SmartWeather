@@ -3,6 +3,7 @@ package com.example.skand.smartweather;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -26,6 +27,8 @@ import java.util.List;
  * A fragment containing the weather forecast list view
  */
 public class ForecastFragment extends Fragment {
+
+    private SwipeRefreshLayout swipeRefreshLayout;
 
     public ForecastFragment() {
     }
@@ -53,7 +56,19 @@ public class ForecastFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+        View rootView = inflater.inflate(R.layout.forecast_fragment, container, false);
+
+        swipeRefreshLayout = (SwipeRefreshLayout) rootView
+                .findViewById(R.id.swipe_refresh_layout);
+
+        swipeRefreshLayout.setOnRefreshListener(
+                new SwipeRefreshLayout.OnRefreshListener() {
+                    @Override
+                    public void onRefresh() {
+                        refreshWeather();
+                        swipeRefreshLayout.setRefreshing(false);
+                    }
+                });
 
         String[] forecastArray = {
                 "Mon 6/23 - Sunny - 31/17",
@@ -111,11 +126,15 @@ public class ForecastFragment extends Fragment {
         // For the time being, we will add a handler for refresh
         int id = item.getItemId();
         if(id == R.id.action_refresh) {
-            FetchWeatherTask fetchWeatherTask = new FetchWeatherTask();
-            fetchWeatherTask.execute();
+            refreshWeather();
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void refreshWeather() {
+        FetchWeatherTask fetchWeatherTask = new FetchWeatherTask();
+        fetchWeatherTask.execute();
     }
 
 }
